@@ -287,7 +287,7 @@ if __name__ == "__main__":
     bulk = args.bulk
     processes = args.processes
 
-    fontSize = args.fontSize
+    fontSize = args.font_size
 
     if cache_type == "redis" and not redis_url:
         parser.error(

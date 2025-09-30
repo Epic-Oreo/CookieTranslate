@@ -35,7 +35,7 @@ pip install -r requirements.txt
 ```
 
 
-Then you can run the program
+Then you can run the program, the first time you run it, it will need to install the models (~1gb) and will take significantly longer.
 ```sh
 python ./server/run.py -i image.png -o image_out.png
 ```
@@ -57,3 +57,11 @@ python ./server/run.py -i image.png -o image_out.png
 
 
 \* = Changes depending if its in bulk mode or not
+
+
+# Future Plans
+
+- [ ] - More customization of translation like changing how boxes merge and such
+- [ ] - Get browser script working better.
+- [ ] - Organize files better
+- [ ] - Auto font-size detection
