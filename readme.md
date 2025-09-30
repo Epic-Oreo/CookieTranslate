@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Epic-Oreo/CookieTranslate/refs/heads/main/docs/cookieTranslateBanner.png">
-    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Epic-Oreo/CookieTranslate/refs/heads/main/docs/cookieTranslateBannerLight">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Epic-Oreo/CookieTranslate/refs/heads/main/docs/cookieTranslateBannerLight.png">
     <img alt="Shows a black logo in light color mode and a white one in dark color mode." src="https://raw.githubusercontent.com/Epic-Oreo/CookieTranslate/refs/heads/main/docs/cookieTranslateBanner.png">
   </picture>
 </p>
