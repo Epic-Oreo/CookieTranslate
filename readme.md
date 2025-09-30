@@ -1,11 +1,10 @@
-
-![vlogo](https://raw.githubusercontent.com/Epic-Oreo/CookieTranslate/refs/heads/main/docs/cookieTranslateBanner.png)
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Epic-Oreo/CookieTranslate/refs/heads/main/docs/cookieTranslateBanner.png">
-  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Epic-Oreo/CookieTranslate/refs/heads/main/docs/cookieTranslateBannerLight.png">
-</picture>
-
-
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Epic-Oreo/CookieTranslate/refs/heads/main/docs/cookieTranslateBanner.png">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Epic-Oreo/CookieTranslate/refs/heads/main/docs/cookieTranslateBannerLight">
+    <img alt="Shows a black logo in light color mode and a white one in dark color mode." src="https://raw.githubusercontent.com/Epic-Oreo/CookieTranslate/refs/heads/main/docs/cookieTranslateBanner.png">
+  </picture>
+</p>
 
 With Cookie Translate you can translate single manga panels or bulk translate a entire folder!
 
