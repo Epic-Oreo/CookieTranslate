@@ -3,7 +3,6 @@ import easyocr
 from googletrans import Translator
 from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageEnhance
 from collections.abc import Callable, Sequence
-import os
 import json
 import hashlib
 import numpy as np

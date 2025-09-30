@@ -271,7 +271,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--fontSize",
+        "--font-size",
         type=int,
         default=25,
         help="Font size for pasted text (default: 25)",
