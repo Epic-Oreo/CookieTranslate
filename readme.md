@@ -15,6 +15,7 @@ and [EasyOCR](https://github.com/JaidedAI/EasyOCR)
 
 # Table of Contents
 * [Table of Contents](#table-of-contents)
+* [Examples](#examples)
 * [Quick Start](#quick-start)
 * [CLI Options](#cli-options)
 * [Future Plans](#future)
@@ -44,6 +45,14 @@ Then you can run the program, the first time you run it, it will need to install
 ```sh
 python ./server/run.py -i image.png -o image_out.png
 ```
+
+# Examples
+
+Input             |  Output
+|-------------------------|-------------------------|
+![](https://raw.githubusercontent.com/Epic-Oreo/CookieTranslate/refs/heads/main/docs/exampleInput.png)  |  ![](https://raw.githubusercontent.com/Epic-Oreo/CookieTranslate/refs/heads/main/docs/exampleOutput.png)
+
+
 
 # CLI Options
 

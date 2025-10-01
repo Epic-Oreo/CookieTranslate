@@ -91,7 +91,7 @@ async def worker(
             # print(f"Saved {savePath}")
             worker_status[id] = f"Completed {name}"
         except Exception as e:
-            print(f"Error processing {name}:", e)
+            # print(f"Error processing {name}:", e)
             worker_status[id] = f"Failed {name}"
             failedQueue.put({"path": path_str, "name": name, "error": str(e)})
 

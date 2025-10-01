@@ -1,6 +1,8 @@
 
 
 test_images/
+server/out/
+server/failed_tasks.json
 .venv
 .vscode
 __pycache__
