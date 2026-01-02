@@ -26,7 +26,15 @@ def createStatusBar(total, process_count):
                 leave=True,
             )
         )
-    return main_bar, status_bars
+    # errorBar = tqdm(
+    #     total=0,
+    #     desc="Total Errors",
+    #     position=len(status_bars)+1,
+    #     bar_format="{desc}: {unit}",
+    #     leave=True
+    # )
+    errorBar = None
+    return main_bar, status_bars, errorBar
 
 
 async def worker(
@@ -43,62 +51,64 @@ async def worker(
     worker_status,
     imageOptions,
 ):
-    # print(f"Worker {id} starting")
-    worker_status[id] = f"Starting..."
+  # print(f"Worker {id} starting")
+  worker_status[id] = f"Starting..."
 
-    redisCache = None
-    if cache_type == "redis":
-        worker_status[id] = f"Connecting to {redis_url}"
+  redisCache = None
+  if cache_type == "redis":
+      worker_status[id] = f"Connecting to {redis_url}"
 
-        if not redis_url:
-            raise Exception("!!Something bad!!")
-        redisCache = redis.Redis(redis_url, decode_responses=True)
+      if not redis_url:
+          raise Exception("!!Something bad!!")
+      redisCache = redis.Redis(redis_url, decode_responses=True)
 
-    out_dir = Path(outPath)
-    out_dir.mkdir(parents=True, exist_ok=True)
+  out_dir = Path(outPath)
+  out_dir.mkdir(parents=True, exist_ok=True)
 
-    worker_status[id] = "Loading Module"
-    translator = CookieTranslator(redisCache=redisCache, debug=debug, fontSize=imageOptions["fontSize"])
+  worker_status[id] = "Loading Module"
+  translator = CookieTranslator(
+      redisCache=redisCache, debug=debug, fontSize=imageOptions["fontSize"]
+  )
 
-    while True:
-        item = queue.get()
-        # handle sentinel for clean shutdown
-        if item is None:
-            worker_status[id] = "Finished"
-            queue.task_done()
-            break
+  while True:
+      item = queue.get()
+      # handle sentinel for clean shutdown
+      if item is None:
+          worker_status[id] = "Finished"
+          queue.task_done()
+          break
 
-        path_str = item.get("path")
-        name = item.get("name")
+      path_str = item.get("path")
+      name = item.get("name")
 
-        worker_status[id] = f"Processing {name}"
+      worker_status[id] = f"Processing {name}"
 
-        try:
-            # print(f"Worker {id} processing {name}")
-            # open the image inside the worker process (images are not reliably picklable)
-            img = Image.open(path_str)
+      try:
+          # print(f"Worker {id} processing {name}")
+          # open the image inside the worker process (images are not reliably picklable)
+          img = Image.open(path_str)
 
-            # translated = await translator.run(img)
-            r = await translator.expandedRun(img)
-            translated = r["image"]
-            if r["cacheInfo"]["all"]:
-                cachedCounter.value += 1
+          # translated = await translator.run(img)
+          r = await translator.expandedRun(img)
+          translated = r["image"]
+          if r["cacheInfo"]["all"]:
+              cachedCounter.value += 1
 
-            save_name = f"{Path(name).stem}.webp"
-            savePath = out_dir / save_name
-            translated.save(savePath, "webp")
+          save_name = f"{Path(name).stem}.webp"
+          savePath = out_dir / save_name
+          translated.save(savePath, "webp")
 
-            # print(f"Saved {savePath}")
-            worker_status[id] = f"Completed {name}"
-        except Exception as e:
-            # print(f"Error processing {name}:", e)
-            worker_status[id] = f"Failed {name}"
-            failedQueue.put({"path": path_str, "name": name, "error": str(e)})
+          # print(f"Saved {savePath}")
+          worker_status[id] = f"Completed {name}"
+      except Exception as e:
+          # print(f"Error processing {name}:", e)
+          worker_status[id] = f"Failed {name}"
+          failedQueue.put({"path": path_str, "name": name, "error": str(e)})
 
-        finally:
-            queue.task_done()
-            with lock:
-                counter.value += 1
+      finally:
+          queue.task_done()
+          with lock:
+              counter.value += 1
 
 
 def startWorker(*args):
@@ -110,9 +120,9 @@ def startWorker(*args):
         loop.close()
 
 
-def progress_monitor(counter, total_items, lock, worker_status):
+def progress_monitor(counter, total_items, lock, worker_status, error):
     """Monitor progress in main process with worker status"""
-    main_bar, status_bars = createStatusBar(total_items, processes)
+    main_bar, status_bars, errorBar = createStatusBar(total_items, processes)
 
     try:
         while True:
@@ -140,7 +150,7 @@ def progress_monitor(counter, total_items, lock, worker_status):
             bar.close()
 
 
-def runBulk(target, outPath, debug, cache_type, redis_url, processes, fontSize):
+def runBulk(target, outPath, debug, cache_type, redis_url, processes, fontSize, silent):
 
     imageOptions = {"fontSize": fontSize}
 
@@ -152,7 +162,8 @@ def runBulk(target, outPath, debug, cache_type, redis_url, processes, fontSize):
 
         # if i >= FIRST_PAGE and i <= LAST_PAGE:
         fp = target / str(file)
-        print(f"Queueing: #{i} - {file}")
+        if not silent:
+            print(f"Queueing: #{i} - {file}")
         # put path into queue; open file in worker process instead
         queue.put({"path": str(fp), "name": file})
 
@@ -169,12 +180,14 @@ def runBulk(target, outPath, debug, cache_type, redis_url, processes, fontSize):
     with Manager() as manager:
         worker_status = manager.dict()
 
-        # Start progress monitor in separate thread
-        monitor_thread = threading.Thread(
-            target=progress_monitor, args=(counter, total_items, lock, worker_status)
-        )
-        monitor_thread.daemon = True
-        monitor_thread.start()
+        if not silent:
+            # Start progress monitor in separate thread
+            monitor_thread = threading.Thread(
+                target=progress_monitor,
+                args=(counter, total_items, lock, worker_status, None),
+            )
+            monitor_thread.daemon = True
+            monitor_thread.start()
 
         runningProcesses = []
         for i in range(processes):
@@ -204,10 +217,11 @@ def runBulk(target, outPath, debug, cache_type, redis_url, processes, fontSize):
         # Workers should exit after receiving sentinel; join them
         for p in runningProcesses:
             p.join()
+            if not silent:
+                print("All tasks completed")
 
-            print("All tasks completed")
-
-        print(f"{cachedCounter.value}/{total_items} Items fully cached")
+        if not silent:
+            print(f"{cachedCounter.value}/{total_items} Items fully cached")
 
         # Save failed tasks to a JSON file
         failed_tasks = []
@@ -277,6 +291,13 @@ if __name__ == "__main__":
         help="Font size for pasted text (default: 25)",
     )
 
+    parser.add_argument(
+        "-s",
+        "--silent",
+        action="store_true",
+        help="Removes text output to console (default: False)",
+    )
+
     args = parser.parse_args()
 
     target = args.input
@@ -286,8 +307,8 @@ if __name__ == "__main__":
     redis_url = args.redis_url
     bulk = args.bulk
     processes = args.processes
-
     fontSize = args.font_size
+    silent = args.silent
 
     if cache_type == "redis" and not redis_url:
         parser.error(
@@ -301,49 +322,59 @@ if __name__ == "__main__":
             outPath = "./out.png"
 
     if bulk:
-      if cache_type != "redis" and cache_type != None:
-        parser.error(
-          "In bulk mode, cache type can only be 'redis' for process safety"
+        if cache_type != "redis" and cache_type != None:
+            parser.error(
+                "In bulk mode, cache type can only be 'redis' for process safety"
+            )
+
+        # check that input and output are directories
+        input_path = Path(target)
+        if not input_path.is_dir():
+            parser.error("In bulk mode, the input path must be a directory")
+        out_path = Path(outPath)
+        if not out_path.is_dir():
+            parser.error("In bulk mode, the output path must be a directory")
+
+        cpu_cores = cpu_count()
+        if processes < 1 or processes > cpu_cores:
+            parser.error(f"The number of processes must be between 1 and {cpu_cores}")
+
+        if not silent:
+            print(f"Running in bulk mode with {processes} processes")
+
+        runBulk(
+            input_path,
+            outPath,
+            debug,
+            cache_type,
+            redis_url,
+            processes,
+            fontSize,
+            silent,
         )
-
-      # check that input and output are directories
-      input_path = Path(target)
-      if not input_path.is_dir():
-        parser.error("In bulk mode, the input path must be a directory")
-      out_path = Path(outPath)
-      if not out_path.is_dir():
-        parser.error("In bulk mode, the output path must be a directory")
-
-      cpu_cores = cpu_count()
-      if processes < 1 or processes > cpu_cores:
-        parser.error(f"The number of processes must be between 1 and {cpu_cores}")
-
-      print(f"Running in bulk mode with {processes} processes")
-
-      runBulk(input_path, outPath, debug, cache_type, redis_url, processes, fontSize)
     else:
 
-      # check that input is a file
-      input_path = Path(target)
-      if not input_path.is_file():
-        parser.error("The input path must be a valid file")
-      out_path = Path(outPath)
-      if out_path.exists() and out_path.is_dir():
-        parser.error("The output path must be a file, not a directory")
+        # check that input is a file
+        input_path = Path(target)
+        if not input_path.is_file():
+            parser.error("The input path must be a valid file")
+        out_path = Path(outPath)
+        if out_path.exists() and out_path.is_dir():
+            parser.error("The output path must be a file, not a directory")
 
-      print("Running in single image mode")
-      translator = CookieTranslator(
-          redisCache=(
-              redis.Redis(redis_url, decode_responses=True)
-              if cache_type == "redis"
-              else None
-          ),
-          debug=debug,
-          fontSize = fontSize
-      )
+        print("Running in single image mode")
+        translator = CookieTranslator(
+            redisCache=(
+                redis.Redis(redis_url, decode_responses=True)
+                if cache_type == "redis"
+                else None
+            ),
+            debug=debug,
+            fontSize=fontSize,
+        )
 
-      print(f"Translating {input_path}...")
-      img = Image.open(input_path)
-      translated = asyncio.run(translator.run(img))
-      translated.save(out_path, "PNG")
-      print(f"Saved translated image to {out_path}")
+        print(f"Translating {input_path}...")
+        img = Image.open(input_path)
+        translated = asyncio.run(translator.run(img))
+        translated.save(out_path, "PNG")
+        print(f"Saved translated image to {out_path}")

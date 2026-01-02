@@ -50,24 +50,24 @@ python ./server/run.py -i image.png -o image_out.png
 
 Input             |  Output
 |-------------------------|-------------------------|
-![](https://raw.githubusercontent.com/Epic-Oreo/CookieTranslate/refs/heads/main/docs/exampleInput.png)  |  ![](https://raw.githubusercontent.com/Epic-Oreo/CookieTranslate/refs/heads/main/docs/exampleOutput.png)
+| ![](https://raw.githubusercontent.com/Epic-Oreo/CookieTranslate/refs/heads/main/docs/exampleInput.png)  |  ![](https://raw.githubusercontent.com/Epic-Oreo/CookieTranslate/refs/heads/main/docs/exampleOutput.png) |
 
 
 
 # CLI Options
 
 
-| Option              | Example                    | Description                                                 |
-|---------------------|----------------------------|------------|
-| `-h` `--help`       |                            | Displays help message                                       |
-| `-d` `--debug`     |                            | Adds extra debug info to images                             |
-| `-i` `--input`      | *`image.png` or `folder/`  | Input file or folder path                                   |
-| `-o` `--output`     | *`output.png` or `output/` | Output file or folder path                                  |
-| `-t` `--cache-type` | `redis` or `none`          | The type of cache to use, will support file cache in future |
-| `-r` `--redis-url` | `localhost:6379` | The url of a redis database if cache type is set to redis |
-|`-b` `--bulk`|| Enables bulk mode which can multi-process large numbers of images |
-|`--processes`| 4 | Number of processes to use in bulk mode |
-|`--font-size`| 20 | Font size of pasted text |
+| Option              | Example                    | Description                                                       |
+|---------------------|----------------------------|-------------------------------------------------------------------|
+| `-h` `--help`       |                            | Displays help message                                             |
+| `-d` `--debug`      |                            | Adds extra debug info to images                                   |
+| `-i` `--input`      | *`image.png` or `folder/`  | Input file or folder path                                         |
+| `-o` `--output`     | *`output.png` or `output/` | Output file or folder path                                        |
+| `-t` `--cache-type` | `redis` or `none`          | The type of cache to use, will support file cache in future       |
+| `-r` `--redis-url`  | `localhost:6379`           | The url of a redis database if cache type is set to redis         |
+| `-b` `--bulk`       |                            | Enables bulk mode which can multi-process large numbers of images |
+| `--processes`       | 4                          | Number of processes to use in bulk mode                           |
+| `--font-size`       | 20                         | Font size of pasted text                                          |
 
 
 \* = Changes depending if its in bulk mode or not

@@ -10,6 +10,7 @@ import asyncio
 import redis
 from loguru import logger
 import warnings
+from pathlib import Path
 
 class CookieTranslator():
   
@@ -179,12 +180,19 @@ class CookieTranslator():
 
     return result
   
+  def __getMinMaxOfBox(self, coords):
+    left = min(coords[0][0], coords[2][0])
+    top = min(coords[0][1], coords[2][1])
+    right = max(coords[0][0], coords[2][0])
+    bottom = max(coords[0][1], coords[2][1])
+    return (left, top, right, bottom)
+  
   def __getSubImages(self, image: Image.Image, boxes: list) -> list[Image.Image]:
     subImages = []
     for box in boxes:
       coords, _ = box
       
-      size = (*coords[0], *coords[2])
+      size = self.__getMinMaxOfBox(coords)
       
       subImages.append(image.copy().crop(size))
     
@@ -238,7 +246,10 @@ class CookieTranslator():
       blurred = enhancer.enhance(1.4)
       
       # Have to separate coords or it someone re adds it to the list
-      image.paste(blurred, (coords[0][0], coords[0][1]))
+      
+      left, top, _, _ = self.__getMinMaxOfBox(coords)
+      
+      image.paste(blurred, (left, top))
       
   def __addLineBreaks(self, text: str, boxWidth: int, font: ImageFont.FreeTypeFont):
     # get individual words
@@ -272,8 +283,9 @@ class CookieTranslator():
     for i, text in enumerate(texts):
       coords, _ = boxes[i]
       
-      boxWidth = coords[2][0] - coords[0][0]
-      boxHeight = coords[2][1] - coords[0][1]
+      left, top, right, bottom = self.__getMinMaxOfBox(coords)
+      boxWidth = right - left
+      boxHeight = bottom - top
       
       text = self.__addLineBreaks(text, boxWidth, font)
             
@@ -310,16 +322,20 @@ class CookieTranslator():
     
     for i, box in enumerate(boxes):
       coords, _ = box
+
+      size = self.__getMinMaxOfBox(coords)
       
-      draw.rectangle((coords[0], coords[2]), None, "red")
+      draw.rectangle(size, None, "red")
       draw.text((coords[0][0], coords[2][1] - 10), str(i), font=font, fill="green")
   
   async def expandedRun(self, image: Image.Image) -> dict:
     imageHash = hashlib.sha256(image.tobytes()).hexdigest()
     draw = ImageDraw.Draw(image)
-    font = "./NotoSansJP-Regular.ttf"
+    current_file_dir = Path(__file__).resolve().parent
+    font = current_file_dir / "NotoSansJP-Regular.ttf"
     
     if self.debug:
+      print(f"Image hash: {imageHash}")
       print("Getting text location")
     boxes, boxesCached = self.__cacheHelper("boxes", imageHash, self.__getBoxes, [image])
     
@@ -349,11 +365,11 @@ class CookieTranslator():
     
     if self.debug:
       print("Drawing Text")
-    self.__writeText(draw, texts, boxes, font, subImages)
+    self.__writeText(draw, texts, boxes, font.as_posix(), subImages)
     
     
     if self.debug:
-      self.__addDebugInfo(draw, boxes, font)
+      self.__addDebugInfo(draw, boxes, font.as_posix())
     
 
     return {

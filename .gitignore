@@ -1,6 +1,7 @@
 
 
 test_images/
+test_images_small/
 server/out/
 server/failed_tasks.json
 .venv
