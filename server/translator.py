@@ -288,7 +288,7 @@ class CookieTranslator():
       boxHeight = bottom - top
       
       text = self.__addLineBreaks(text, boxWidth, font)
-            
+ 
       img = subImages[i]
       img = img.convert("RGB")
 
@@ -306,6 +306,14 @@ class CookieTranslator():
       else:
         # Is dark color
         textFill = "white"
+
+      draw.rectangle(draw.textbbox(
+        (coords[0][0] + round(boxWidth/2), coords[0][1] + round(boxHeight/2)), 
+        text, 
+        font=font, 
+        anchor="mm", 
+        align="center"
+      ), fill="green")
 
       draw.text(
         (coords[0][0] + round(boxWidth/2), coords[0][1] + round(boxHeight/2)), 
@@ -397,7 +405,7 @@ class CookieTranslator():
 
 
 if __name__ == "__main__":
-  target = Image.open("./test.png")
+  target = Image.open("./example.png")
   outPath = "./out.png"
 
   t = CookieTranslator(debug=True)
