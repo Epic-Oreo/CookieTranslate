@@ -27,11 +27,7 @@ class CookieTranslator():
     self.__redisCache: redis.Redis | None = redisCache
 
     self.fontSize = fontSize
-    
 
-       
-    
-    
 
   # Allows to call a function with a caching wrapper
   def __cacheHelper(self, section: str, key: str, getter: Callable, params: list):
@@ -82,15 +78,6 @@ class CookieTranslator():
     #     result = await getter(*params)
     #     self.__cache[section][key] = result
     #     return result
-    
-  # ! file cache is disabled for now
-  # Saves the cache to its file
-  # def saveCache(self):
-  #   if not self.__objectCache:
-  #     with open("./cache.json", "w") as f:
-  #       json.dump(self.__cache, f)
-
-
 
   def __getBoxes(self, image: Image.Image):
     numpy_image = np.array(image)
@@ -148,7 +135,7 @@ class CookieTranslator():
         copy_draw.rectangle((coords[0], coords[2]), None, "red")
         
       image_copy.save(f"./imgs/{id}.png")
-      
+
     result = boxes.copy()
     
     finished = False

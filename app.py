@@ -21,6 +21,10 @@ LOADING_MODAL_TAG = "loading_modal"
 PROGRESS_BAR_TAG = "progress_bar"
 TEXT_LOG_TAG = "text_log"
 REDIS_GROUP_INPUT_TAG = "redis_group_input_tag"
+OUTPUT_WINDOW_TAG = "output_window"
+PREVIEW_WINDOW_TAG = "preview_window"
+LEFT_WINDOW_TAG = "left_window"
+FILES_SECTION_TAG = "files_section"
 
 class NeverThrownException(Exception):
   pass
@@ -177,11 +181,6 @@ def main():
   )  # Initial size, will be overridden
   dpg.setup_dearpygui()
 
-  output_window = dpg.generate_uuid()
-  preview_window = dpg.generate_uuid()
-  left_window = dpg.generate_uuid()
-  files_section = dpg.generate_uuid()
-
   images = []
   image_names = []
   singleReturnQueue = Queue()
@@ -192,48 +191,17 @@ def main():
   lock = Lock()
 
   async def translateSingle(imageTag, _, __, returnQueue: Queue):
-
-      # dpg.focus_item(preview_window)
-      # dpg.render_dearpygui_frame()
       print(f"Translating {imageTag}")
       image = images[int(imageTag.split("_")[-1])]
-      # Dummy translation: convert to grayscale
 
-      # font_size_value = dpg.get_value("font_size_option")
+      font_size_value = dpg.get_value("font_size_option")
 
-      # translator = CookieTranslator(fontSize=font_size_value)
-      translator = CookieTranslator(fontSize=25)
+      translator = CookieTranslator(fontSize=font_size_value)
       translated_image = await translator.run(image)
       print("Completed")
       translator = None  # free memory
 
-      window_size = 320, 480
-
       returnQueue.put(translated_image)
-
-      # returnQueue.
-
-      # with dpg.window(label="Translated Image", width=window_size[0]+20, height=window_size[1]+40):
-      #   width, height = translated_image.size
-
-      #   # Convert image to flat list of normalized RGBA values
-      #   texture_data = []
-      #   for y in range(height):
-      #       for x in range(width):
-      #           pixel: list[float] = translated_image.getpixel((x, y)) # type: ignore
-      #           # Normalize color values to 0-1 range
-      #           texture_data.extend([
-      #               pixel[0] / 255,
-      #               pixel[1] / 255,
-      #               pixel[2] / 255,
-      #               pixel[3] / 255 if len(pixel) > 3 else 1.0
-      #               ])
-
-      #   texture_tag = dpg.generate_uuid()
-      #   with dpg.texture_registry():
-      #       dpg.add_static_texture(width=width, height=height, default_value=texture_data, tag=texture_tag)
-
-      #   dpg.add_image(texture_tag, width=window_size[0], height=window_size[1])
 
   def runSingle(imageTag, _, __, returnQueue):
       loop = asyncio.new_event_loop()
@@ -279,7 +247,6 @@ def main():
 
           dpg.add_image(texture_tag, width=window_size[0], height=window_size[1])
 
-
   def create_info_window():
 
     with dpg.window(tag="info_window", modal=True, show=False, label="", no_close=True, autosize=True):
@@ -297,8 +264,6 @@ def main():
             width=75,
             callback=lambda: dpg.hide_item("info_window")
         )
-      
-
 
   def show_info(title, message, selection_callback=None):
     dpg.set_item_label("info_window", title)
@@ -423,7 +388,7 @@ def main():
             width=width, height=height, default_value=texture_data, tag=file_uid
         )
 
-        with dpg.group(parent=files_section, horizontal=True):
+        with dpg.group(parent=FILES_SECTION_TAG, horizontal=True):
           dpg.add_image(file_uid, width=40, height=60)
           with dpg.group():
             dpg.add_text(file)
@@ -473,12 +438,7 @@ def main():
       height=400,
   )
 
-  with dpg.window(
-    label="Input",
-    tag=left_window,
-    no_move=not WINDOW_EDIT_MODE,
-    no_close=not WINDOW_EDIT_MODE,
-  ):
+  with dpg.window(label="Input", tag=LEFT_WINDOW_TAG, no_move=not WINDOW_EDIT_MODE, no_close=not WINDOW_EDIT_MODE):
     with dpg.group(horizontal=True):
       dpg.add_text("Select Image/Folder: ")
       dpg.add_button(
@@ -504,7 +464,7 @@ def main():
 
     dpg.add_separator()
 
-    with dpg.child_window(height=300, resizable_y=True, tag=files_section):
+    with dpg.child_window(height=300, resizable_y=True, tag=FILES_SECTION_TAG):
       # files_section
       pass
 
@@ -600,15 +560,15 @@ def main():
 
   with dpg.window(
     label="Output",
-    tag=output_window,
+    tag=OUTPUT_WINDOW_TAG,
     no_move=not WINDOW_EDIT_MODE,
     no_close=not WINDOW_EDIT_MODE,
   ):
-    pass
+    dpg.add_button(label="Save Layout", callback=lambda:dpg.save_init_file("custom_layout.ini"), show=WINDOW_EDIT_MODE)
 
   with dpg.window(
     label="Preview",
-    tag=preview_window,
+    tag=PREVIEW_WINDOW_TAG,
     no_move=not WINDOW_EDIT_MODE,
     no_close=not WINDOW_EDIT_MODE,
   ):
@@ -681,10 +641,8 @@ def main():
         dpg.hide_item(LOADING_MODAL_TAG)
         is_loading.value = 0
 
-
-
   dpg.destroy_context()
 
 
 if __name__ == "__main__":
-    main()
+  main()
